@@ -1,3 +1,5 @@
+import lombok.Getter;
+
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
 
@@ -11,6 +13,7 @@ import javax.swing.JScrollPane;
 
 public class MainWindow extends JFrame {
 
+	@Getter
 	private DefaultListModel<String> historyListModel;
 	private JList<String> historyList;
 
@@ -22,10 +25,12 @@ public class MainWindow extends JFrame {
 
 	private JLabel snapshot3Label;
 	private JButton snapshot3Button;
+	@Getter
+	private static MainWindow instance;
 	
 	public static void main(String[] args) {
-		MainWindow mainWindow = new MainWindow();
-		mainWindow.setVisible(true);
+		instance = new MainWindow();
+		instance.setVisible(true);
 	}
 
 	public MainWindow() {
@@ -79,11 +84,18 @@ public class MainWindow extends JFrame {
 		sidePanel.add(snapshot3);
 
 		add(sidePanel, BorderLayout.EAST);
+		createHangars();
 	}
 
 	private void snapshot(int snapshot) {
 		// TODO
 		historyListModel.addElement("Snapshot ...");
+	}
+
+	private void createHangars() {
+		Hangar hangar1 = new Hangar(1);
+		Hangar hangar2 = new Hangar(2);
+		Hangar hangar3 = new Hangar(3);
 	}
 
 }
