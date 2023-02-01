@@ -2,6 +2,8 @@ import lombok.Getter;
 
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
+import java.io.IOException;
+import java.net.*;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -27,7 +29,12 @@ public class MainWindow extends JFrame {
 	private JButton snapshot3Button;
 	@Getter
 	private static MainWindow instance;
-	
+
+	Hangar hangar1;
+	Hangar hangar2;
+	Hangar hangar3;
+
+	private DatagramSocket socket;
 	public static void main(String[] args) {
 		instance = new MainWindow();
 		instance.setVisible(true);
@@ -42,9 +49,11 @@ public class MainWindow extends JFrame {
 		historyListModel = new DefaultListModel<String>();
 		historyList = new JList<String>(historyListModel);
 		historyList.setAutoscrolls(true);
-		
+
 		JScrollPane historyScroll = new JScrollPane(historyList);
 		add(historyScroll, BorderLayout.CENTER);
+
+		createHangars();
 
 		// slide panel
 		JPanel sidePanel = new JPanel();
@@ -64,7 +73,7 @@ public class MainWindow extends JFrame {
 		// snapshot 2
 		snapshot2Label = new JLabel("Hangar 2 (#0)");
 		snapshot2Button = new JButton("Snapshot");
-		snapshot2Button.addActionListener(x -> snapshot(1));
+		snapshot2Button.addActionListener(x -> snapshot(2));
 
 		JPanel snapshot2 = new JPanel();
 		snapshot2.setLayout(new GridLayout(2, 1));
@@ -75,7 +84,7 @@ public class MainWindow extends JFrame {
 		// snapshot 3
 		snapshot3Label = new JLabel("Hangar 3 (#0)");
 		snapshot3Button = new JButton("Snapshot");
-		snapshot3Button.addActionListener(x -> snapshot(1));
+		snapshot3Button.addActionListener(x -> snapshot(3));
 
 		JPanel snapshot3 = new JPanel();
 		snapshot3.setLayout(new GridLayout(2, 1));
@@ -84,18 +93,46 @@ public class MainWindow extends JFrame {
 		sidePanel.add(snapshot3);
 
 		add(sidePanel, BorderLayout.EAST);
-		createHangars();
+
 	}
 
 	private void snapshot(int snapshot) {
 		// TODO
+
 		historyListModel.addElement("Snapshot ...");
+		try {
+			send("start", snapshot);
+		} catch (SocketException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	private void createHangars() {
-		Hangar hangar1 = new Hangar(1);
-		Hangar hangar2 = new Hangar(2);
-		Hangar hangar3 = new Hangar(3);
+		hangar1 = new Hangar(1);
+		hangar2 = new Hangar(2);
+		hangar3 = new Hangar(3);
+	}
+
+	public void send(String message, int hangarId) throws SocketException {
+		socket = new DatagramSocket(null);
+		try {
+			socket.connect(InetAddress.getLocalHost(),hangarId+4000);
+		} catch (UnknownHostException e) {
+			throw new RuntimeException(e);
+		}
+
+		message = hangarId+","+message;
+		byte[] buf = message.getBytes();
+		try {
+			DatagramPacket packet = new DatagramPacket(buf, buf.length, InetAddress.getLocalHost(), hangarId+4000);
+			socket.send(packet);
+
+		} catch (UnknownHostException e) {
+			throw new RuntimeException(e);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 }
+
