@@ -99,7 +99,7 @@ public class MainWindow extends JFrame {
 	private void snapshot(int snapshot) {
 		// TODO
 
-		historyListModel.addElement("Snapshot ...");
+		historyListModel.addElement("Snapshot: "+snapshot +" initiator");
 		try {
 			send("start", snapshot);
 		} catch (SocketException e) {

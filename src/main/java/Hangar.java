@@ -34,18 +34,19 @@ public class Hangar extends Thread {
         }
     }
 
-    private void processMessage(String message) {
+    private void processMessage(String message) throws InterruptedException {
         //message = id of the sender, list of the transferred airplanes
         String[] afterSplit = message.split(",");
         int senderId = Integer.parseInt(afterSplit[0]);
         int receivedAirplanes = (afterSplit.length - 1);
         String logMessage = "Transfer: H"+senderId + "-> H" + id + " (" + receivedAirplanes +")";
-
+        System.out.println(logMessage);
 
         String my_message = afterSplit[1];
 
+        MainWindow.getInstance().getHistoryListModel().addElement(logMessage);
 
-        if (my_message.equals("start")) System.out.println("Snapshot: "+id +" initiator");
+        //if (my_message.equals("start")) System.out.println("Snapshot: "+id +" initiator");
 
         //if the recording is finished in different processes increment the counter
         //Once the counter will be equal 2 we are sure that the all of the processes are finished and we can start a new snapshot
@@ -59,8 +60,11 @@ public class Hangar extends Thread {
 
         //once the process has already started its recording and there is another mark that has arrived (like record or start) it should stop recording
         if (hasnt_recorded_its_state == true && recorded_its_state == false && (my_message.equals("record") || my_message.equals("start"))){
-            //System.out.println("recorded messages:"+received_messages);
-            //System.out.println("stop recording inside hangar: "+id);
+            System.out.println("recorded messages:"+received_messages);
+            System.out.println("stop recording inside hangar: "+id);
+            for (Airplane airplane: received_messages){
+                MainWindow.getInstance().getHistoryListModel().addElement("Recorded airplane inside hangar: "+id+" :"+airplane.getId());
+            }
             received_messages.clear();
             for (int i=1;i<=3;i++) {
                 if (i == id) continue;
@@ -75,25 +79,36 @@ public class Hangar extends Thread {
             finished_counter=0;
 
             //save arrived messages during recoding process
-            for(int i = 1; i<afterSplit.length; i++) {
-                String airplaneId = afterSplit[i];
-                received_messages.add(new Airplane(airplaneId));
-            }
+//            for(int i = 1; i<afterSplit.length; i++) {
+//                String airplaneId = afterSplit[i];
+//                received_messages.add(new Airplane(airplaneId));
+//            }
 
-            //System.out.println("Start recording inside hangar: "+id);
-
+            System.out.println("Start recording inside hangar: "+id);
+            Thread.sleep(2000);
             //send marks to all processes
             for (int i=1;i<=3;i++){
                 if(i==id) continue;
-                //System.out.println("sending to: "+i+" from: "+id);
+                System.out.println("sending to: "+i+" from: "+id);
+                MainWindow.getInstance().getHistoryListModel().addElement("Mark: H"+id + "-> H" + i);
                 System.out.println("Mark: H"+id + "-> H" + i);
                 send("record",i);
             }
         }
+
         for(int i = 1; i<afterSplit.length; i++) {
             String airplaneId = afterSplit[i];
-            System.out.println(logMessage);
             airplanes.add(new Airplane(airplaneId));
+        }
+
+
+        if (hasnt_recorded_its_state==true && recorded_its_state==false && !(my_message.equals("record") || my_message.equals("start"))){
+            for(int i = 1; i<afterSplit.length; i++) {
+                String airplaneId = afterSplit[i];
+                Airplane airplane = new Airplane(airplaneId);
+                System.out.println("recorded: "+airplane.getId()+" inside id: "+id);
+                received_messages.add(new Airplane(airplaneId));
+            }
         }
     }
 
@@ -145,6 +160,8 @@ public class Hangar extends Thread {
                 //once it receives the message to the socket it will display a message
                 processMessage(received);
             } catch (IOException e) {
+                throw new RuntimeException(e);
+            } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
         }
